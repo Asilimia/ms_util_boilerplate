@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="ms_util_boilerplate",
-    version="0.1.1",
+    version="0.1.2",
     packages=find_packages(),
     install_requires=[
         "uvicorn==0.29.0",

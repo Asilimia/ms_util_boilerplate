@@ -1,14 +1,13 @@
-from fastapi import FastAPI, Depends, HTTPException
 import logging
 import sys
 import time
 from logging.handlers import RotatingFileHandler
-
+from fastapi import Depends, HTTPException
 from fastapi import FastAPI
 from fastapi import Request
 from fastapi.openapi.utils import get_openapi
-from fastapi.routing import APIRoute
 from pydantic import BaseModel, ValidationError, Field
+from starlette.middleware.base import BaseHTTPMiddleware
 
 
 # Logging configuration function
@@ -22,37 +21,35 @@ def configure_logging():
 
 
 # Middleware for logging requests
+class LoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        start_time = time.time()
+        response = await call_next(request)
+        process_time = time.time() - start_time
 
+        # Initialize a list to hold logged parts
+        logged_parts = [
+            f"method = {request.method}",
+            f"url = {request.url}",
+            f"x-correlation-id = {request.headers.get('x-correlation-id')}",
+            f"initiator = {request.headers.get('initiator')}",
+            f"processTime = {process_time:.4f} seconds",
+            f"status_code = {response.status_code}"
 
-async def log_requests(request: Request, call_next):
-    start_time = time.time()
-    response = await call_next(request)
-    process_time = time.time() - start_time
+        ]
 
-    # Initialize a list to hold logged parts
-    logged_parts = [
-        f"method = {request.method}",
-        f"url = {request.url}",
-        f"x-correlation-id = {request.headers.get('x-correlation-id')}",
-        f"initiator = {request.headers.get('initiator')}",
-        f"processTime = {process_time:.4f} seconds",
-        f"status_code = {response.status_code}"
+        # Iterate over all attributes of request.state and filter by prefix
+        prefix = "app_"
+        state_variables = vars(request.state)
 
+        for key, value in state_variables.get("_state", {}).items():
+            if key.startswith(prefix):
+                logged_parts.append(f"{key} = {value}")
 
-    ]
+        # Join all parts with " | " and log
+        logging.info(" | ".join(logged_parts))
 
-    # Iterate over all attributes of request.state and filter by prefix
-    prefix = "app_"
-    state_variables = vars(request.state)
-
-    for key, value in state_variables.get("_state", {}).items():
-        if key.startswith(prefix):
-            logged_parts.append(f"{key} = {value}")
-
-    # Join all parts with " | " and log
-    logging.info(" | ".join(logged_parts))
-
-    return response
+        return response
 
 
 # Function to apply logging configuration and middleware to a FastAPI app
@@ -74,7 +71,7 @@ async def validate_headers(request: Request):
 
 def configure_app(app: FastAPI):
     configure_logging()
-    app.middleware("http")(log_requests)
+    app.add_middleware(LoggingMiddleware)
 
     app.router.dependencies.append(Depends(validate_headers))
 
