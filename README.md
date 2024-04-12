@@ -21,7 +21,7 @@ After installing the package, configure it within your FastAPI project by settin
 To use authentication, decorate relevant FastAPI endpoints with the authentication decorator provided by the package.
 
 ```python
-from your_package.auth import requires_auth
+from configs.auth import requires_auth
 
 @app.get("/protected")
 @requires_auth
@@ -43,7 +43,7 @@ configure_app_logging(app)
 For encryption, use the encryption decorator to automatically encrypt and decrypt data in specific routes.
 
 ```python
-from your_package.encryption import encrypt_data
+from configs.encryption import encrypt_data
 
 @app.get("/encrypt")
 @encrypt_data
