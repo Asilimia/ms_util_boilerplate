@@ -1,7 +1,0 @@
-uvicorn
-fastapi
-pytest
-pydantic
-starlette
-cryptography
-setuptools
