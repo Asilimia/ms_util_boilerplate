@@ -12,5 +12,5 @@ setup(
         "setuptools",
         "fastapi==0.110.1",
     ],
-    python_requires='>=3.8, <3.11.8',  # Python 3.6 up to but not including Python 4
+    python_requires='>=3.8, <3.12',  # Python 3.6 up to but not including Python 4
 )
