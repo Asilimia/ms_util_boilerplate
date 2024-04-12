@@ -11,7 +11,7 @@ app = FastAPI()
 # Protected endpoint that requires authentication
 @app.get("/protected")
 @auth_required
-async def protected_route(current_user: DecodedToken):
+async def protected_route(request: Request, current_user: DecodedToken):
     return {"message": f"Hello, {current_user.name}! Your email is {current_user.email}."}
 
 
