@@ -27,6 +27,8 @@ class DecodedToken(BaseModel):
     sub: str
     name: str
     email: str
+    # phone: str
+
     # Add other relevant claims as needed
 
 
@@ -58,4 +60,5 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 def auth_required(endpoint):
     async def wrapper(request: Request, current_user: DecodedToken = Depends(get_current_user)):
         return await endpoint(request, current_user=current_user)
+
     return wrapper
