@@ -3,8 +3,10 @@ name: Build
 on:
   push:
     branches:
-      - master
-
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
@@ -12,16 +14,31 @@ jobs:
     runs-on: ubuntu-latest
     permissions: read-all
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - uses: sonarsource/sonarqube-scan-action@master
+          # Disabling shallow clone is recommended for improving relevancy of reporting.
+          fetch-depth: 0
+      
+      # Triggering SonarQube analysis as results of it are required by Quality Gate check.
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-      # If you wish to fail your job when the Quality Gate is red, uncomment the
-      # following lines. This would typically be used to fail a deployment.
-      - uses: sonarsource/sonarqube-quality-gate-action@master
+      
+      # Check the Quality Gate status.
+      - name: SonarQube Quality Gate check
+        id: sonarqube-quality-gate-check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        # Force to fail step after specific time.
         timeout-minutes: 5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }} #OPTIONAL
+      
+      # Fail the job if the Quality Gate status is not "PASSED"
+      - name: Check Quality Gate status
+        if: steps.sonarqube-quality-gate-check.outputs.quality-gate-status != 'PASSED'
+        run: |
+          echo "SonarQube Quality Gate failed. Pull request cannot be merged."
+          exit 1
