@@ -5,9 +5,9 @@ setup(
     version="0.1.2",
     packages=find_packages(),
     install_requires=[
-        "uvicorn==0.29.0",
-        "python_jose==3.3.0",
-        "cryptography==42.0.5",
+        "uvicorn>=0.29.0",
+        "python_jose>=3.3.0",
+        "cryptography>=42.0.5",
         "pytest>=8.1.1",
         "setuptools",
         "fastapi==0.110.1",
