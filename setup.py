@@ -8,7 +8,7 @@ setup(
         "uvicorn==0.29.0",
         "python_jose==3.3.0",
         "cryptography==42.0.5",
-        "pytest==7.4.0",
+        "pytest>=8.1.1",
         "setuptools",
         "fastapi==0.110.1",
     ],
