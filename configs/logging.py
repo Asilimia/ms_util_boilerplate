@@ -6,7 +6,7 @@ from fastapi import Depends, HTTPException
 from fastapi import FastAPI
 from fastapi import Request
 from fastapi.openapi.utils import get_openapi
-from pydantic import BaseModel, ValidationError, Field
+from pydantic import BaseModel, ValidationError, Field, ConfigDict
 from starlette.middleware.base import BaseHTTPMiddleware
 
 
@@ -56,6 +56,10 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 class CustomHeaders(BaseModel):
     x_correlation_id: str = Field(..., alias="x-correlation-id")
     initiator: str
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
 
 
 async def validate_headers(request: Request):
