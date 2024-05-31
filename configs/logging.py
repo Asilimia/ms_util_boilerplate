@@ -73,7 +73,7 @@ def configure_app(app: FastAPI):
     configure_logging()
     app.add_middleware(LoggingMiddleware)
 
-    app.router.dependencies.append(Depends(validate_headers))
+    # app.router.dependencies.append(Depends(validate_headers))
 
     # Include CustomHeaders model in FastAPI schema
     def custom_openapi():

@@ -34,9 +34,9 @@ def protected_route(request: Request,current_user: DecodedToken):
 To configure logging throughout your application, use the provided function at the application setup stage.
 
 ```python
-from configs.logging import configure_app_logging
+from configs.logging import configure_app
 
-configure_app_logging(app)
+configure_app(app)
 ```
 
 **Encryption:**
