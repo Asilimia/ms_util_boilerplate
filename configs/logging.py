@@ -95,6 +95,13 @@ def configure_app(app: FastAPI):
             },
             "required": ["x-correlation-id", "initiator"],
         }
+
+        # Ensure the required structure exists before accessing it
+        openapi_schema.setdefault("paths", {})
+        openapi_schema["paths"].setdefault("/", {})
+        openapi_schema["paths"]["/"].setdefault("get", {})
+        openapi_schema["paths"]["/"]["get"].setdefault("parameters", [])
+
         openapi_schema["paths"]["/"]["get"]["parameters"] = [
             {
                 "name": "x-correlation-id",
