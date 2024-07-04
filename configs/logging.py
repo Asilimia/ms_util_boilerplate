@@ -15,7 +15,7 @@ def configure_logging():
     log_level = logging.INFO
     log_format = "%(asctime)s | [%(levelname)s] | %(message)s"
     logging.basicConfig(level=log_level, format=log_format, handlers=[
-        RotatingFileHandler("myapp.log", maxBytes=10000, backupCount=10),
+        RotatingFileHandler("app.log", maxBytes=10000, backupCount=10),
         logging.StreamHandler(sys.stdout),
     ])
 
