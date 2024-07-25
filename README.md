@@ -21,10 +21,11 @@ After installing the package, configure it within your FastAPI project by settin
 To use authentication, decorate relevant FastAPI endpoints with the authentication decorator provided by the package.
 
 ```python
-from configs.auth import requires_auth
+from configs.auth import auth_required, DecodedToken
+
 
 @app.get("/protected")
-@requires_auth
+@auth_required
 def protected_route(request: Request,current_user: DecodedToken):
     print(current_user)
     return {"message": "This is a protected route"}
