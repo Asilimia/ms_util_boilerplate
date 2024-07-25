@@ -12,7 +12,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")  # Adjust this URL as nee
 JWT_SECRET_KEY = "8f4f5b0f9a1d3c2e7b6a9d0c3f2e5a8b"
 JWT_ALGORITHM = "HS256"  # Typically HS256 is used with secret keys
 JWT_SUBJECT = "api_user_authentication"
-JWT_TOKEN_PREFIX = "Bearer"
 
 
 class UnauthorizedException(HTTPException):
@@ -56,10 +55,6 @@ def get_jwt_payload(token: str) -> dict:
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
-    if not token.startswith(JWT_TOKEN_PREFIX):
-        raise UnauthorizedException("Invalid token prefix")
-
-    token = token[len(JWT_TOKEN_PREFIX):].strip()
 
     if not validate_jwt(token):
         raise UnauthorizedException("Invalid token")

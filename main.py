@@ -6,7 +6,6 @@ from configs.logging import configure_app
 
 app = FastAPI(title="Secure API", version="0.1.0", description="This is a secure API.")
 
-configure_app(app)
 
 
 @app.get("/")
@@ -21,4 +20,4 @@ async def read_root(request: Request, current_user: DecodedToken):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="localhost", port=8000)
+    uvicorn.run(app, host="localhost", port=8002)
