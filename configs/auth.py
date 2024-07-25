@@ -4,57 +4,72 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from pydantic import BaseModel
 from starlette.requests import Request
+import datetime
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="https://13.247.59.145:8443/realms/leja-v3/protocol/openid-connect/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")  # Adjust this URL as needed
 
-# Keycloak configuration
-KEYCLOAK_PUBLIC_KEY = """-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnM3M1Z/xC3jZg3M+Do5a4M2jsxvw/Oz3fAQ5J2QbwKUSUFPff04q9ErYAs8zmR6hqzkfzZrODHHu5NgkhijrJnnDLN7+y4v+jFlYoe2ZFaFeOlpFHMkAldd3wdWXUD/2AnYeNNWzIm0ZQzgXpnh3cnKwxomd+xGuj2dqupiM8cO9BXqzV83+ebZyCh+iwyUcTw80qcpQUzwoZZcAm2XHYFlVBXSOlzKKAcmeM/7OdxTS88p5Iks8f83T4KZwJM9Z+7nS+vPXTIWxn1wSt1OT/z8L8+gnFPmMPkDfIrgM3XMIJYYgemqTnB2Ph+P3cH5I24PnxHCM7+1bxOdpW+bx4QIDAQAB
------END PUBLIC KEY-----"""
-KEYCLOAK_ALGORITHM = "RS256"
-KEYCLOAK_AUDIENCE = "account"
-KEYCLOAK_ISSUER = "https://13.247.59.145:8443/realms/leja-v3"
+# JWT configuration
+JWT_SECRET_KEY = "8f4f5b0f9a1d3c2e7b6a9d0c3f2e5a8b"
+JWT_ALGORITHM = "HS256"  # Typically HS256 is used with secret keys
+JWT_SUBJECT = "api_user_authentication"
+JWT_TOKEN_PREFIX = "Bearer"
 
 
-# Custom exception for unauthorized access
 class UnauthorizedException(HTTPException):
     def __init__(self, detail: str):
         super().__init__(status_code=401, detail=detail)
 
 
-# Pydantic model for the decoded token
 class DecodedToken(BaseModel):
     sub: str
-    name: str
-    email: str
-    # phone: str
-
+    username: str
+    exp: datetime.datetime
     # Add other relevant claims as needed
 
 
-# Dependency to decode and validate the access token
-async def get_current_user(token: str = Depends(oauth2_scheme)):
+def validate_jwt(token: str) -> bool:
     try:
         payload = jwt.decode(
             token,
-            KEYCLOAK_PUBLIC_KEY,
-            algorithms=[KEYCLOAK_ALGORITHM],
-            audience=None,  # Set audience to None to skip audience validation
-            issuer=KEYCLOAK_ISSUER,
-            options={"verify_aud": False},  # Disable audience validation
+            JWT_SECRET_KEY,
+            algorithms=[JWT_ALGORITHM],
+            options={"verify_sub": True}
         )
-        # Get the list of audiences from the token payload
-        audiences = payload.get("aud", [])
+        if payload["sub"] != JWT_SUBJECT:
+            return False
+        return True
+    except JWTError:
+        return False
 
-        # Validate if the token has the expected audience
-        if KEYCLOAK_AUDIENCE not in audiences:
-            raise JWTError("Invalid audience")
 
+def get_jwt_payload(token: str) -> dict:
+    try:
+        payload = jwt.decode(
+            token,
+            JWT_SECRET_KEY,
+            algorithms=[JWT_ALGORITHM],
+            options={"verify_sub": True}
+        )
+        return payload
+    except JWTError as token_decode_error:
+        raise ValueError("Unable to decode JWT Token") from token_decode_error
+
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    if not token.startswith(JWT_TOKEN_PREFIX):
+        raise UnauthorizedException("Invalid token prefix")
+
+    token = token[len(JWT_TOKEN_PREFIX):].strip()
+
+    if not validate_jwt(token):
+        raise UnauthorizedException("Invalid token")
+
+    try:
+        payload = get_jwt_payload(token)
         user = DecodedToken(**payload)
         return user
-    except JWTError as e:
-        print("Error:", e)
-        raise UnauthorizedException("Invalid token")
+    except ValueError as e:
+        raise UnauthorizedException(str(e))
 
 
 def auth_required(endpoint):
@@ -62,3 +77,15 @@ def auth_required(endpoint):
         return await endpoint(request, current_user=current_user)
 
     return wrapper
+
+
+# # Function to generate JWT token (for reference, typically used in your authentication service)
+# def generate_access_token(account: dict, expires_delta: datetime.timedelta = None):
+#     to_encode = account.copy()
+#     if expires_delta:
+#         expire = datetime.datetime.utcnow() + expires_delta
+#     else:
+#         expire = datetime.datetime.utcnow() + datetime.timedelta(minutes=15)
+#     to_encode.update({"exp": expire, "sub": JWT_SUBJECT})
+#     encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+#     return f"{JWT_TOKEN_PREFIX} {encoded_jwt}"
